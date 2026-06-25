@@ -1,7 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 from PIL import Image
-from sentence_transformers import SentenceTransformer
 import joblib
 import numpy as np
 import io
@@ -9,8 +8,6 @@ import io
 app = FastAPI()
 
 model = joblib.load("xgb_face_rank_model.pkl")
-clip_model = SentenceTransformer("clip-ViT-B-32")
-
 @app.get("/")
 def home():
     return FileResponse("whom-should-i-date.html")
