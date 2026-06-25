@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+sentence-transformers
+joblib
+xgboost
+numpy
+scikit-learn
