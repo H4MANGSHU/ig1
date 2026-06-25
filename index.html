@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Celestial Garden of Memories</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #0d001a 50%, #000000 100%);
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .ui-layer {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Glassmorphism UI Elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Start Screen */
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #2d1b69 0%, #0f0518 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 1s ease;
+        }
+
+        .title-glow {
+            font-size: 4rem;
+            background: linear-gradient(45deg, #ff6b9d, #c44569, #f8b500, #ff6b9d);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 4s ease infinite;
+            text-align: center;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 30px rgba(255, 107, 157, 0.5));
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.3rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .magic-button {
+            padding: 20px 60px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .magic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .magic-button:hover::before {
+            left: 100%;
+        }
+
+        .magic-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.6);
+        }
+
+        /* HUD */
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .hud-panel {
+            padding: 15px 25px;
+            color: white;
+            pointer-events: auto;
+        }
+
+        .hearts-counter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+
+        .heart-icon {
+            color: #ff6b9d;
+            font-size: 1.5rem;
+            animation: pulse 1s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .chapter-indicator {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .chapter-title {
+            font-size: 1.1rem;
+            color: #f8b500;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #f8b500, #ff6b9d);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(248, 181, 0, 0.5);
+        }
+
+        /* Dialogue Box */
+        #dialogue-box {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 800px;
+            width: 90%;
+            padding: 30px;
+            color: white;
+            opacity: 0;
+            pointer-events: auto;
+            transition: all 0.5s ease;
+        }
+
+        #dialogue-box.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .dialogue-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.95);
+            min-height: 60px;
+        }
+
+        .dialogue-author {
+            color: #f8b500;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .continue-hint {
+            text-align: right;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            margin-top: 15px;
+            animation: blink 1.5s ease infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Treasure Modal */
+        .treasure-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .treasure-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .treasure-content {
+            padding: 50px;
+            text-align: center;
+            max-width: 500px;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+
+        .treasure-modal.active .treasure-content {
+            transform: scale(1);
+        }
+
+        .treasure-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: float 3s ease infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .treasure-title {
+            font-size: 2rem;
+            background: linear-gradient(45deg, #f8b500, #ff6b9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .treasure-message {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .close-treasure {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-treasure:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* Navigation Hints */
+        .nav-hint {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .key {
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Particle Effects Container */
+        #particles-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .floating-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float-particle 10s linear infinite;
+        }
+
+        @keyframes float-particle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Completion Screen */
+        #completion-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #4a1c6b 0%, #0f0518 100%);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .final-message {
+            text-align: center;
+            color: white;
+            max-width: 700px;
+            padding: 40px;
+        }
+
+        .final-title {
+            font-size: 3.5rem;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #ff6b9d, #f8b500, #ff6b9d);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        .final-text {
+            font-size: 1.3rem;
+            line-height: 2;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .love-signature {
+            margin-top: 40px;
+            font-size: 1.5rem;
+            color: #ff6b9d;
+            font-style: italic;
+        }
+
+        /* Cursor Trail */
+        .cursor-trail {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 107, 157, 0.8), transparent);
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.1s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .title-glow { font-size: 2.5rem; }
+            .subtitle { font-size: 1rem; padding: 0 20px; }
+            #hud { flex-direction: column; gap: 10px; }
+            .hud-panel { width: 100%; }
+            .chapter-indicator { text-align: left; }
+            .progress-bar { width: 100%; }
+            #mobile-controls { display: flex !important; }
+            .nav-hint { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Particle Overlay -->
+    <div id="particles-overlay"></div>
+
+    <!-- Cursor Trail Elements -->
+    <div id="cursor-trails"></div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="interactive">
+        <h1 class="title-glow">✨ The Celestial Garden ✨</h1>
+        <p class="subtitle">A magical journey through the stars, where every step reveals a piece of our story.<br>Collect the stardust hearts and discover the treasures hidden in our memories.</p>
+        <button class="magic-button" onclick="startGame()">Begin Our Journey 💫</button>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud" style="opacity: 0;">
+        <div class="hud-panel glass-panel">
+            <div class="hearts-counter">
+                <span class="heart-icon">💕</span>
+                <span id="hearts-count">0 / 12</span>
+            </div>
+        </div>
+        <div class="hud-panel glass-panel chapter-indicator">
+            <div class="chapter-title" id="chapter-name">Chapter 1: The First Meeting</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dialogue Box -->
+    <div id="dialogue-box" class="glass-panel">
+        <div class="dialogue-author" id="dialogue-author">Narrator</div>
+        <div class="dialogue-text" id="dialogue-text">Welcome to a world where love shines brighter than the stars...</div>
+        <div class="continue-hint">Click anywhere or press SPACE to continue ➤</div>
+    </div>
+
+    <!-- Navigation Hints -->
+    <div class="nav-hint" id="nav-hint" style="opacity: 0;">
+        <span><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> or Arrows to move</span>
+        <span><span class="key">CLICK</span> to interact</span>
+        <span><span class="key">SPACE</span> to advance</span>
+    </div>
+
+
+
+    <!-- Mobile Controls -->
+    <div id="mobile-controls" style="display:none; position:fixed; bottom:25px; left:20px; z-index:30; gap:8px; flex-direction:column; pointer-events:auto;">
+        <button class="key" ontouchstart="keys['w']=true" ontouchend="keys['w']=false">▲</button>
+        <div style="display:flex; gap:8px;">
+            <button class="key" ontouchstart="keys['a']=true" ontouchend="keys['a']=false">◀</button>
+            <button class="key" ontouchstart="keys['s']=true" ontouchend="keys['s']=false">▼</button>
+            <button class="key" ontouchstart="keys['d']=true" ontouchend="keys['d']=false">▶</button>
+        </div>
+    </div>
+
+    <!-- Treasure Modal -->
+    <div class="treasure-modal" id="treasure-modal">
+        <div class="treasure-content glass-panel">
+            <div class="treasure-icon" id="treasure-icon">💎</div>
+            <div class="treasure-title" id="treasure-title">Memory Unlocked!</div>
+            <div class="treasure-message" id="treasure-message">You found a precious memory...</div>
+            <button class="close-treasure" onclick="closeTreasure()">Continue Journey</button>
+        </div>
+    </div>
+
+    <!-- Completion Screen -->
+    <div id="completion-screen" class="interactive">
+        <div class="final-message">
+            <h1 class="final-title">🌟 ill be back to you soon babee 🌟</h1>
+            <div class="final-text">
+                <p>You've collected all the stardust hearts and unlocked every memory.</p>
+                <p>But this is just the beginning...</p>
+                <p>Every day with you is a new chapter waiting to be written.</p>
+                <p>Thank you for being the magic in my life.</p>
+            </div>
+            <div class="love-signature">Forever Yours 💕</div>
+            <button class="magic-button" style="margin-top: 40px;" onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const gameState = {
+            started: false,
+            currentChapter: 0,
+            heartsCollected: 0,
+            totalHearts: chapters.reduce((sum, ch) => sum + ch.hearts.length, 0),
+            treasuresFound: [],
+            dialogueIndex: 0,
+            canMove: true
+        };
+
+        // Chapters Data
+        const chapters = [
+            {
+                name: "Chapter 1: The First Spark",
+                color: 0xff6b9d,
+                hearts: [
+                    { pos: [10, 2, 10], message: "The day our eyes first met...", treasure: "🌸 First Glance 🌸", detail: "In a crowded room, somehow I only saw you." },
+                    { pos: [-15, 3, 8], message: "Your smile lit up my world...", treasure: "✨ First Smile ✨", detail: "That smile that still makes my heart skip." },
+                    { pos: [20, 4, -5], message: "The first time we laughed together...", treasure: "💫 First Laugh 💫", detail: "Your laugh is my favorite melody." }
+                ]
+            },
+            {
+                name: "Chapter 2: Growing Closer", 
+                color: 0x667eea,
+                hearts: [
+                    { pos: [-20, 5, -15], message: "Late night conversations...", treasure: "🌙 Midnight Talks 🌙", detail: "When the world slept, we discovered each other." },
+                    { pos: [25, 3, 20], message: "Your kindness amazes me...", treasure: "💖 Kind Heart 💖", detail: "The way you care for everyone around you." },
+                    { pos: [-10, 6, 25], message: "Learning your favorite things...", treasure: "🎵 Your Music 🎵", detail: "Now I smile every time I hear those songs." }
+                ]
+            },
+            {
+                name: "Chapter 3: Falling",
+                color: 0xf8b500,
+                hearts: [
+                    { pos: [30, 8, -20], message: "The moment I knew...", treasure: "💘 Realization 💘", detail: "When I realized you were the one." },
+                    { pos: [-25, 4, -30], message: "Missing you when you're away...", treasure: "🥺 Longing 🥺", detail: "Every second apart feels too long." },
+                    { pos: [15, 7, 35], message: "Dreaming of our future...", treasure: "🔮 Dreams 🔮", detail: "All my future plans include you." }
+                ]
+            },
+            {
+                name: "Chapter 4: Together",
+                color: 0x764ba2,
+                hearts: [
+                    { pos: [-35, 6, 15], message: "Your hand in mine...", treasure: "🤝 Holding Hands 🤝", detail: "The perfect fit, like we were made for each other." },
+                    { pos: [40, 5, -35], message: "Our inside jokes...", treasure: "😂 Laughter 😂", detail: "The silly moments only we understand." },
+                    { pos: [-5, 9, -40], message: "Your strength inspires me...", treasure: "💪 Admiration 💪", detail: "You handle everything with such grace." }
+                ]
+            },
+            {
+                name: "Chapter 5: Forever",
+                color: 0xff6b9d,
+                hearts: [
+                    { pos: [0, 12, 0], message: "Every moment with you is precious...", treasure: "⏰ Timeless ⏰", detail: "Time stops when I'm with you." },
+                    { pos: [50, 10, 50], message: "My heart is yours...", treasure: "❤️ Forever Yours ❤️", detail: "Completely, utterly, forever." }
+                ]
+            }
+        ];
+
+        // Three.js Setup
+        let scene, camera, renderer;
+        let player, playerLight;
+        let hearts = [];
+        let particles = [];
+        let islands = [];
+        let raycaster, mouse;
+        let clock = new THREE.Clock();
+
+        // Initialize Three.js
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x1a0033, 0.015);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 30);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404080, 0.5);
+            scene.add(ambientLight);
+
+            const moonLight = new THREE.DirectionalLight(0x9999ff, 0.8);
+            moonLight.position.set(50, 100, 50);
+            moonLight.castShadow = true;
+            scene.add(moonLight);
+
+            // Player (Glowing Orb)
+            const playerGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+            const playerMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff,
+                emissive: 0xff6b9d,
+                emissiveIntensity: 0.8
+            });
+            player = new THREE.Mesh(playerGeometry, playerMaterial);
+            player.position.set(0, 2, 0);
+            scene.add(player);
+
+            // Player light
+            playerLight = new THREE.PointLight(0xff6b9d, 2, 20);
+            playerLight.position.copy(player.position);
+            scene.add(playerLight);
+
+            // Create floating islands
+            createIslands();
+
+            // Create initial hearts
+            spawnHeartsForChapter(0);
+
+            // Particle system
+            createParticles();
+
+            // Raycaster for interactions
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('click', onMouseClick);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+            // Create cursor trails
+            createCursorTrails();
+
+            animate();
+        }
+
+        function createIslands() {
+            // Main platform
+            const islandGeometry = new THREE.CylinderGeometry(8, 6, 4, 8);
+            const islandMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x2d1b69,
+                emissive: 0x1a0a3a,
+                emissiveIntensity: 0.3
+            });
+
+            // Create multiple floating islands
+            const islandPositions = [
+                [0, 0, 0, 8],
+                [30, 5, 20, 6],
+                [-35, 8, -15, 7],
+                [25, -3, -30, 5],
+                [-20, 10, 30, 6],
+                [50, 15, -10, 5],
+                [-40, 5, 40, 4]
+            ];
+
+            islandPositions.forEach(([x, y, z, r]) => {
+                const island = new THREE.Mesh(islandGeometry, islandMaterial);
+                island.position.set(x, y - 2, z);
+                island.scale.set(r/8, 1, r/8);
+                island.castShadow = true;
+                island.receiveShadow = true;
+                
+                // Add glow ring
+                const ringGeometry = new THREE.RingGeometry(r * 0.8, r * 1.2, 32);
+                const ringMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xff6b9d, 
+                    transparent: true, 
+                    opacity: 0.3,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.y = 0.1;
+                island.add(ring);
+
+                // Floating animation
+                gsap.to(island.position, {
+                    y: y - 2 + Math.sin(Date.now() * 0.001) * 0.5,
+                    duration: 3,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut"
+                });
+
+                scene.add(island);
+                islands.push(island);
+            });
+        }
+
+        function createHeartMesh(color = 0xff6b9d) {
+            // Create heart shape using curves
+            const x = 0, y = 0;
+            const heartShape = new THREE.Shape();
+            heartShape.moveTo(x + 0.25, y + 0.25);
+            heartShape.bezierCurveTo(x + 0.25, y + 0.25, x + 0.20, y, x, y);
+            heartShape.bezierCurveTo(x - 0.30, y, x - 0.30, y + 0.35, x - 0.30, y + 0.35);
+            heartShape.bezierCurveTo(x - 0.30, y + 0.55, x - 0.10, y + 0.77, x + 0.25, y + 0.95);
+            heartShape.bezierCurveTo(x + 0.60, y + 0.77, x + 0.80, y + 0.55, x + 0.80, y + 0.35);
+            heartShape.bezierCurveTo(x + 0.80, y + 0.35, x + 0.80, y, x + 0.50, y);
+            heartShape.bezierCurveTo(x + 0.35, y, x + 0.25, y + 0.25, x + 0.25, y + 0.25);
+
+            const geometry = new THREE.ExtrudeGeometry(heartShape, {
+                depth: 0.2,
+                bevelEnabled: true,
+                bevelSegments: 2,
+                steps: 2,
+                bevelSize: 0.05,
+                bevelThickness: 0.05
+            });
+
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.5,
+                shininess: 100,
+                specular: 0xffffff
+            });
+
+            const heart = new THREE.Mesh(geometry, material);
+            heart.scale.set(1.5, 1.5, 1.5);
+            heart.rotation.x = Math.PI;
+            heart.rotation.z = Math.PI;
+
+            // Add point light
+            const light = new THREE.PointLight(color, 1, 10);
+            heart.add(light);
+
+            return heart;
+        }
+
+        function spawnHeartsForChapter(chapterIndex) {
+            // Clear existing hearts
+            hearts.forEach(h => scene.remove(h.mesh));
+            hearts = [];
+
+            if (chapterIndex >= chapters.length) return;
+
+            const chapter = chapters[chapterIndex];
+            
+            chapter.hearts.forEach((heartData, index) => {
+                const heart = createHeartMesh(chapter.color);
+                heart.position.set(...heartData.pos);
+                scene.add(heart);
+
+                // Floating animation
+                gsap.to(heart.position, {
+                    y: heartData.pos[1] + 1,
+                    duration: 2,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "sine.inOut",
+                    delay: index * 0.3
+                });
+
+                // Rotation animation
+                gsap.to(heart.rotation, {
+                    y: Math.PI * 2,
+                    duration: 8,
+                    repeat: -1,
+                    ease: "none"
+                });
+
+                hearts.push({
+                    mesh: heart,
+                    data: heartData,
+                    collected: false,
+                    id: `chapter${chapterIndex}_heart${index}`
+                });
+            });
+
+            // Update HUD
+            document.getElementById('chapter-name').textContent = chapter.name;
+            document.getElementById('chapter-name').style.color = '#' + chapter.color.toString(16).padStart(6, '0');
+        }
+
+        function createParticles() {
+            const particleGeometry = new THREE.BufferGeometry();
+            const particleCount = 1000;
+            const positions = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 200;
+                positions[i + 1] = (Math.random() - 0.5) * 100;
+                positions[i + 2] = (Math.random() - 0.5) * 200;
+            }
+
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+            scene.add(particleSystem);
+            particles.push(particleSystem);
+        }
+
+        function createCursorTrails() {
+            const container = document.getElementById('cursor-trails');
+            for (let i = 0; i < 5; i++) {
+                const trail = document.createElement('div');
+                trail.className = 'cursor-trail';
+                trail.style.opacity = (5 - i) / 10;
+                container.appendChild(trail);
+            }
+
+            let mouseX = 0, mouseY = 0;
+            const trails = document.querySelectorAll('.cursor-trail');
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function animateTrails() {
+                trails.forEach((trail, index) => {
+                    const delay = (index + 1) * 2;
+                    setTimeout(() => {
+                        trail.style.left = mouseX - 10 + 'px';
+                        trail.style.top = mouseY - 10 + 'px';
+                    }, delay * 10);
+                });
+                requestAnimationFrame(animateTrails);
+            }
+            animateTrails();
+        }
+
+
+        function updateMovement() {
+            if (!gameState.started || !gameState.canMove || !player) return;
+            const speed = 0.35;
+            const moveVector = new THREE.Vector3();
+            if (keys['w'] || keys['arrowup']) moveVector.z -= speed;
+            if (keys['s'] || keys['arrowdown']) moveVector.z += speed;
+            if (keys['a'] || keys['arrowleft']) moveVector.x -= speed;
+            if (keys['d'] || keys['arrowright']) moveVector.x += speed;
+            if (moveVector.length() > 0) {
+                player.position.add(moveVector);
+                playerLight.position.copy(player.position);
+                gsap.to(camera.position, { x: player.position.x, z: player.position.z + 30, duration: 0.2 });
+                camera.lookAt(player.position);
+                checkHeartCollisions();
+            }
+        }
+
+        // Input Handling
+        const keys = {};
+        function onKeyDown(e) {
+            if (!gameState.started) return;
+            
+            keys[e.key.toLowerCase()] = true;
+            
+            if (e.code === 'Space') {
+                advanceDialogue();
+            }
+
+            // Movement
+            if (gameState.canMove) {
+                const speed = 0.5;
+                const moveVector = new THREE.Vector3();
+                
+                if (keys['w'] || keys['arrowup']) moveVector.z -= speed;
+                if (keys['s'] || keys['arrowdown']) moveVector.z += speed;
+                if (keys['a'] || keys['arrowleft']) moveVector.x -= speed;
+                if (keys['d'] || keys['arrowright']) moveVector.x += speed;
+
+                if (moveVector.length() > 0) {
+                    player.position.add(moveVector);
+                    playerLight.position.copy(player.position);
+                    
+                    // Camera follow
+                    gsap.to(camera.position, {
+                        x: player.position.x,
+                        z: player.position.z + 30,
+                        duration: 0.5
+                    });
+                    camera.lookAt(player.position);
+
+                    checkHeartCollisions();
+                }
+            }
+        }
+
+        function onMouseMove(e) {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onMouseClick(e) {
+            if (!gameState.started) return;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Check heart clicks
+            const heartMeshes = hearts.filter(h => !h.collected).map(h => h.mesh);
+            const intersects = raycaster.intersectObjects(heartMeshes);
+
+            if (intersects.length > 0) {
+                const clickedHeart = hearts.find(h => h.mesh === intersects[0].object);
+                if (clickedHeart) {
+                    collectHeart(clickedHeart);
+                }
+            }
+
+            // Advance dialogue on click
+            if (document.getElementById('dialogue-box').classList.contains('active')) {
+                advanceDialogue();
+            }
+        }
+
+        function checkHeartCollisions() {
+            hearts.forEach(heart => {
+                if (!heart.collected) {
+                    const distance = player.position.distanceTo(heart.mesh.position);
+                    if (distance < 3) {
+                        collectHeart(heart);
+                    }
+                }
+            });
+        }
+
+        function collectHeart(heart) {
+            heart.collected = true;
+            gameState.heartsCollected++;
+            
+            // Update HUD
+            document.getElementById('hearts-count').textContent = 
+                `${gameState.heartsCollected} / ${gameState.totalHearts}`;
+            
+            const progress = (gameState.heartsCollected / gameState.totalHearts) * 100;
+            document.getElementById('progress-fill').style.width = `${progress}%`;
+
+            // Animation
+            gsap.to(heart.mesh.scale, {
+                x: 0, y: 0, z: 0,
+                duration: 0.5,
+                ease: "back.in(1.7)",
+                onComplete: () => {
+                    scene.remove(heart.mesh);
+                }
+            });
+
+            // Particle burst
+            createParticleBurst(heart.mesh.position);
+
+            // Show treasure
+            showTreasure(heart.data);
+
+            // Play sound
+            playCollectSound();
+
+            // Check chapter completion
+            const chapterHearts = hearts.filter(h => h.collected).length;
+            if (chapterHearts === chapters[gameState.currentChapter].hearts.length) {
+                setTimeout(() => {
+                    advanceChapter();
+                }, 2000);
+            }
+
+            // Check game completion
+            if (gameState.heartsCollected === gameState.totalHearts) {
+                setTimeout(showCompletion, 3000);
+            }
+        }
+
+        function createParticleBurst(position) {
+            const burstCount = 20;
+            const geometry = new THREE.SphereGeometry(0.2, 8, 8);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0xff6b9d,
+                transparent: true 
+            });
+
+            for (let i = 0; i < burstCount; i++) {
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(position);
+                
+                const velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+
+                scene.add(particle);
+
+                gsap.to(particle.position, {
+                    x: particle.position.x + velocity.x * 10,
+                    y: particle.position.y + velocity.y * 10,
+                    z: particle.position.z + velocity.z * 10,
+                    duration: 1,
+                    ease: "power2.out"
+                });
+
+                gsap.to(particle.material, {
+                    opacity: 0,
+                    duration: 1,
+                    onComplete: () => scene.remove(particle)
+                });
+            }
+        }
+
+        function showTreasure(heartData) {
+            gameState.canMove = false;
+            
+            document.getElementById('treasure-icon').textContent = heartData.treasure.split(' ')[0];
+            document.getElementById('treasure-title').textContent = heartData.treasure;
+            document.getElementById('treasure-message').textContent = heartData.detail;
+            
+            const modal = document.getElementById('treasure-modal');
+            modal.classList.add('active');
+
+            // Play treasure sound
+            playTreasureSound();
+        }
+
+        function closeTreasure() {
+            document.getElementById('treasure-modal').classList.remove('active');
+            gameState.canMove = true;
+            
+            // Show dialogue
+            const heart = hearts.find(h => h.collected && h.data.message);
+            if (heart) {
+                showDialogue("Memory", heart.data.message);
+            }
+        }
+
+        function showDialogue(author, text) {
+            document.getElementById('dialogue-author').textContent = author;
+            document.getElementById('dialogue-text').textContent = text;
+            document.getElementById('dialogue-box').classList.add('active');
+        }
+
+        function advanceDialogue() {
+            const dialogueBox = document.getElementById('dialogue-box');
+            if (dialogueBox.classList.contains('active')) {
+                dialogueBox.classList.remove('active');
+            }
+        }
+
+        function advanceChapter() {
+            gameState.currentChapter++;
+            if (gameState.currentChapter < chapters.length) {
+                // Transition effect
+                gsap.to(scene.fog, {
+                    density: 0.05,
+                    duration: 1,
+                    onComplete: () => {
+                        spawnHeartsForChapter(gameState.currentChapter);
+                        gsap.to(scene.fog, {
+                            density: 0.015,
+                            duration: 1
+                        });
+                    }
+                });
+
+                showDialogue("New Chapter", `Welcome to ${chapters[gameState.currentChapter].name}`);
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('completion-screen').style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('completion-screen').style.opacity = '1';
+            }, 100);
+
+            // Create celebration particles
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createParticleBurst(new THREE.Vector3(
+                        (Math.random() - 0.5) * 50,
+                        Math.random() * 30,
+                        (Math.random() - 0.5) * 50
+                    ));
+                }, i * 100);
+            }
+        }
+
+        // Audio
+        let synth, treasureSynth;
+        
+        function initAudio() {
+            synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            synth.volume.value = -10;
+            
+            treasureSynth = new Tone.Synth({
+                oscillator: { type: "sine" },
+                envelope: {
+                    attack: 0.01,
+                    decay: 0.5,
+                    sustain: 0.1,
+                    release: 1
+                }
+            }).toDestination();
+        }
+
+        function playCollectSound() {
+            if (synth) {
+                const notes = ["C5", "E5", "G5", "B5", "C6"];
+                const note = notes[Math.floor(Math.random() * notes.length)];
+                synth.triggerAttackRelease(note, "8n");
+            }
+        }
+
+        function playTreasureSound() {
+            if (treasureSynth) {
+                treasureSynth.triggerAttackRelease("C6", "4n");
+                setTimeout(() => treasureSynth.triggerAttackRelease("E6", "4n"), 200);
+                setTimeout(() => treasureSynth.triggerAttackRelease("G6", "2n"), 400);
+            }
+        }
+
+        // Game Start
+        async function startGame() {
+            await Tone.start();
+            initAudio();
+            
+            gameState.started = true;
+            
+            // Fade out start screen
+            const startScreen = document.getElementById('start-screen');
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+            }, 1000);
+
+            // Show HUD
+            gsap.to('#hud', { opacity: 1, duration: 1, delay: 0.5 });
+            gsap.to('#nav-hint', { opacity: 1, duration: 1, delay: 1 });
+
+            // Initial dialogue
+            setTimeout(() => {
+                showDialogue("Welcome", "Use WASD or Arrow keys to move. Click on the glowing hearts to collect them and unlock our memories...");
+            }, 1500);
+
+            // Create floating particles in DOM
+            createFloatingParticles();
+        }
+
+        function createFloatingParticles() {
+            const container = document.getElementById('particles-overlay');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'floating-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = clock.getElapsedTime();
+            updateMovement();
+
+            // Rotate particles
+            particles.forEach(p => {
+                p.rotation.y += 0.001;
+                p.rotation.x += 0.0005;
+            });
+
+            // Pulse player
+            if (player) {
+                const scale = 1 + Math.sin(time * 3) * 0.1;
+                player.scale.set(scale, scale, scale);
+            }
+
+            // Floating islands gentle movement
+            islands.forEach((island, i) => {
+                island.position.y += Math.sin(time * 0.5 + i) * 0.002;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
